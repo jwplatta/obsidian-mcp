@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { VaultManager } from "./vault-manager.js";
 import { ObsidianClient } from "./client.js";
 import { registerVaultManagementTools } from "./tools/vault-management.js";
+import { registerActiveFileTools } from "./tools/active-file.js";
 
 const server = new McpServer({
   name: "obsidian-mcp",
@@ -13,23 +14,20 @@ const server = new McpServer({
   },
 });
 
-// Initialize vault management system
 const vaultManager = new VaultManager();
 const obsidianClient = new ObsidianClient(vaultManager);
 
 async function main() {
   try {
-    // Initialize vault manager and register tools
     await vaultManager.initialize();
     registerVaultManagementTools(server, vaultManager, obsidianClient);
-    
-    // Start the server
+    registerActiveFileTools(server, vaultManager, obsidianClient);
+
     const transport = new StdioServerTransport();
     await server.connect(transport);
     console.error("Obsidian MCP Server running on stdio");
     console.error(`Vault configuration: ${vaultManager.configPath}`);
-    
-    // Log available vaults
+
     const vaults = await vaultManager.listVaults();
     if (vaults.length > 0) {
       console.error(`Configured vaults: ${vaults.map(v => v.name).join(", ")}`);
