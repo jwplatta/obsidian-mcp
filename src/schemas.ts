@@ -62,3 +62,44 @@ export const VaultListResponseSchema = z.object({
 
 export type VaultInfoResponse = z.infer<typeof VaultInfoResponseSchema>;
 export type VaultListResponse = z.infer<typeof VaultListResponseSchema>;
+
+export const GetActiveFileParamsSchema = z.object({
+  vault: z.string().optional(),
+});
+
+export const AppendToActiveFileParamsSchema = z.object({
+  content: z.string().min(1, "Content is required"),
+  vault: z.string().optional(),
+});
+
+export const ReplaceActiveFileParamsSchema = z.object({
+  content: z.string(),
+  vault: z.string().optional(),
+});
+
+export const PatchActiveFileParamsSchema = z.object({
+  insertions: z.array(z.object({
+    line: z.number().int().min(0),
+    content: z.string(),
+  })).optional(),
+  deletions: z.array(z.object({
+    startLine: z.number().int().min(0),
+    endLine: z.number().int().min(0),
+  })).optional(),
+  replacements: z.array(z.object({
+    startLine: z.number().int().min(0),
+    endLine: z.number().int().min(0),
+    content: z.string(),
+  })).optional(),
+  vault: z.string().optional(),
+});
+
+export const DeleteActiveFileParamsSchema = z.object({
+  vault: z.string().optional(),
+});
+
+export type GetActiveFileParams = z.infer<typeof GetActiveFileParamsSchema>;
+export type AppendToActiveFileParams = z.infer<typeof AppendToActiveFileParamsSchema>;
+export type ReplaceActiveFileParams = z.infer<typeof ReplaceActiveFileParamsSchema>;
+export type PatchActiveFileParams = z.infer<typeof PatchActiveFileParamsSchema>;
+export type DeleteActiveFileParams = z.infer<typeof DeleteActiveFileParamsSchema>;
