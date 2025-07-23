@@ -7,7 +7,8 @@ import { registerActiveFileTools } from "./tools/active-file.js";
 import { registerVaultFileTools } from "./tools/vault-files.js";
 import { registerVaultDirectoryTools } from "./tools/vault-directories.js";
 import { registerSearchTools } from "./tools/search.js";
-import { registerResources } from "./resources.js";
+import { registerResources } from "./registerResources.js";
+import { registerTools } from "./registerTools.js";
 
 const server = new McpServer({
   name: "obsidian-mcp",
@@ -24,16 +25,9 @@ const obsidianClient = new ObsidianClient(vaultManager);
 async function main() {
   try {
     await vaultManager.initialize();
-    
-    // Register MCP resources
+
     registerResources(server);
-    
-    // Register MCP tools
-    registerVaultManagementTools(server, vaultManager, obsidianClient);
-    registerActiveFileTools(server, vaultManager, obsidianClient);
-    registerVaultFileTools(server, vaultManager, obsidianClient);
-    registerVaultDirectoryTools(server, vaultManager, obsidianClient);
-    registerSearchTools(server, vaultManager, obsidianClient);
+    registerTools(server, obsidianClient);
 
     const transport = new StdioServerTransport();
     await server.connect(transport);
