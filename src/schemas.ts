@@ -103,3 +103,85 @@ export type AppendToActiveFileParams = z.infer<typeof AppendToActiveFileParamsSc
 export type ReplaceActiveFileParams = z.infer<typeof ReplaceActiveFileParamsSchema>;
 export type PatchActiveFileParams = z.infer<typeof PatchActiveFileParamsSchema>;
 export type DeleteActiveFileParams = z.infer<typeof DeleteActiveFileParamsSchema>;
+
+// Vault File Operations Schemas
+export const GetFileParamsSchema = z.object({
+  path: z.string().min(1, "File path is required"),
+  vault: z.string().optional(),
+});
+
+export const CreateFileParamsSchema = z.object({
+  path: z.string().min(1, "File path is required"),
+  content: z.string(),
+  vault: z.string().optional(),
+});
+
+export const AppendToFileParamsSchema = z.object({
+  path: z.string().min(1, "File path is required"),
+  content: z.string().min(1, "Content is required"),
+  vault: z.string().optional(),
+});
+
+export const ReplaceFileParamsSchema = z.object({
+  path: z.string().min(1, "File path is required"),
+  content: z.string(),
+  vault: z.string().optional(),
+});
+
+export const PatchFileParamsSchema = z.object({
+  path: z.string().min(1, "File path is required"),
+  insertions: z.array(z.object({
+    line: z.number().int().min(0),
+    content: z.string(),
+  })).optional(),
+  deletions: z.array(z.object({
+    startLine: z.number().int().min(0),
+    endLine: z.number().int().min(0),
+  })).optional(),
+  replacements: z.array(z.object({
+    startLine: z.number().int().min(0),
+    endLine: z.number().int().min(0),
+    content: z.string(),
+  })).optional(),
+  vault: z.string().optional(),
+});
+
+export const DeleteFileParamsSchema = z.object({
+  path: z.string().min(1, "File path is required"),
+  vault: z.string().optional(),
+});
+
+export const ListVaultFilesParamsSchema = z.object({
+  path: z.string().optional().default(""),
+  vault: z.string().optional(),
+});
+
+export const ListDirectoryParamsSchema = z.object({
+  path: z.string().optional().default(""),
+  vault: z.string().optional(),
+});
+
+export type GetFileParams = z.infer<typeof GetFileParamsSchema>;
+export type CreateFileParams = z.infer<typeof CreateFileParamsSchema>;
+export type AppendToFileParams = z.infer<typeof AppendToFileParamsSchema>;
+export type ReplaceFileParams = z.infer<typeof ReplaceFileParamsSchema>;
+export type PatchFileParams = z.infer<typeof PatchFileParamsSchema>;
+export type DeleteFileParams = z.infer<typeof DeleteFileParamsSchema>;
+export type ListVaultFilesParams = z.infer<typeof ListVaultFilesParamsSchema>;
+export type ListDirectoryParams = z.infer<typeof ListDirectoryParamsSchema>;
+
+// Search Operations Schemas
+export const SearchVaultParamsSchema = z.object({
+  query: z.string().min(1, "Query is required"),
+  queryType: z.enum(["dataview", "jsonlogic"]).optional().default("dataview"),
+  vault: z.string().optional(),
+});
+
+export const SimpleSearchParamsSchema = z.object({
+  query: z.string().min(1, "Search query is required"),
+  contextLength: z.number().int().min(0).optional().describe("Number of characters of context to include around matches"),
+  vault: z.string().optional(),
+});
+
+export type SearchVaultParams = z.infer<typeof SearchVaultParamsSchema>;
+export type SimpleSearchParams = z.infer<typeof SimpleSearchParamsSchema>;
