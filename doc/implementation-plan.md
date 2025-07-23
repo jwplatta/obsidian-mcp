@@ -217,23 +217,46 @@ src/
 
 ## Multi-Vault Usage Examples
 
-**Setup:**
-```bash
-# Environment variables
-export DEVELOPMENT_OBSIDIAN_API_KEY="dev-api-key-123"
-export DEVELOPMENT_OBSIDIAN_BASE_URL="http://localhost:27123"
-export PERSONAL_OBSIDIAN_API_KEY="personal-api-key-456"
-export PERSONAL_OBSIDIAN_BASE_URL="http://localhost:27124"
+**Setup via MCP Tools:**
+```javascript
+// Add a development vault
+await server.call("add_vault", {
+  name: "development",
+  apiKey: "dev-api-key-123",
+  baseUrl: "http://localhost:27123",
+  displayName: "Development Vault",
+  setAsActive: true
+});
+
+// Add a personal vault
+await server.call("add_vault", {
+  name: "personal", 
+  apiKey: "personal-api-key-456",
+  baseUrl: "http://localhost:27124",
+  displayName: "Personal Notes"
+});
 ```
 
-**Tool Usage:**
+**Vault Management:**
 ```javascript
 // List all configured vaults
 await server.call("list_vaults");
 
+// Get vault information
+await server.call("get_vault_info", { vault: "development" });
+
 // Switch to personal vault
 await server.call("set_active_vault", { vault: "personal" });
 
+// Get current active vault
+await server.call("get_active_vault");
+
+// Remove a vault
+await server.call("remove_vault", { vault: "old_vault" });
+```
+
+**File Operations:**
+```javascript
 // Get file from specific vault (without switching)
 await server.call("get_file", {
   path: "notes/meeting.md",

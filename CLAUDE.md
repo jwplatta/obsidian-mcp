@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an MCP (Model Context Protocol) server for Obsidian integration. The project provides a TypeScript-based MCP server that can be used to extend Claude's capabilities with Obsidian-specific functionality.
+This is an MCP (Model Context Protocol) server for Obsidian integration. The project provides a TypeScript-based MCP server with multi-vault support for managing multiple Obsidian instances through the Local REST API plugin.
 
 ## Architecture
 
@@ -14,7 +14,11 @@ This is an MCP (Model Context Protocol) server for Obsidian integration. The pro
 - **Build Output**: Compiled JavaScript in `build/` directory
 - **Binary**: Executable at `build/index.js` (accessible via `obsidian-mcp` command)
 
-The server currently includes weather API examples that should be replaced with Obsidian-specific tools and resources.
+### Multi-Vault System
+- **VaultManager**: `src/vault-manager.ts` - Manages vault configurations and persistence
+- **ObsidianClient**: `src/client.ts` - HTTP client with vault-aware requests
+- **Config**: `src/config.ts` - Configuration management
+- **Tools**: `src/tools/vault-management.ts` - MCP tools for vault operations
 
 ## Development Commands
 
@@ -40,6 +44,20 @@ npm test  # Will fail - no tests specified
 - `obsidian`: Obsidian API integration
 - `zod`: Schema validation
 
-## Current State
+## Available MCP Tools
 
-The codebase contains placeholder weather API functionality that demonstrates MCP tool implementation patterns. This should be replaced with Obsidian-specific tools for vault operations, note management, and plugin interactions.
+### Vault Management
+- `list_vaults` - List all configured vaults with connection status
+- `get_vault_info` - Get detailed information about a specific vault  
+- `set_active_vault` - Switch to a different vault for operations
+- `add_vault` - Add new vault configuration with API key
+- `remove_vault` - Remove vault configuration
+- `get_active_vault` - Get currently active vault information
+
+### Configuration
+- Vault configurations stored in `~/.config/obsidian-mcp/vaults.json`
+- No environment variable dependency - pure config-file approach
+- Automatic persistence of vault settings and active state
+
+## Usage
+All vault operations are managed through MCP tools. Use `add_vault` to configure new Obsidian instances, then switch between them using `set_active_vault` or specify vault per operation.
