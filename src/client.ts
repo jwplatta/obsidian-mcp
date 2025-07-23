@@ -211,6 +211,18 @@ export class ObsidianClient {
   }
 
   /**
+   * Patch active file with specific line operations
+   */
+  async patchActiveFile(patchData: any, vaultName?: string): Promise<void> {
+    logger.info(`Patching active file`, { vault: vaultName });
+    await this.request("/active/", {
+      method: "PATCH",
+      body: patchData,
+      vault: vaultName,
+    });
+  }
+
+  /**
    * Delete active file
    */
   async deleteActiveFile(vaultName?: string): Promise<void> {
@@ -253,6 +265,17 @@ export class ObsidianClient {
   }
 
   /**
+   * Patch file with specific line operations
+   */
+  async patchFile(filePath: string, patchData: any, vaultName?: string): Promise<void> {
+    await this.request(`/vault/${encodeURIComponent(filePath)}`, {
+      method: "PATCH",
+      body: patchData,
+      vault: vaultName,
+    });
+  }
+
+  /**
    * Delete file
    */
   async deleteFile(filePath: string, vaultName?: string): Promise<void> {
@@ -284,10 +307,16 @@ export class ObsidianClient {
   /**
    * Simple text search
    */
-  async simpleSearch(query: string, vaultName?: string): Promise<any> {
-    return this.request("/search/simple/", {
+  async simpleSearch(query: string, contextLength?: number, vaultName?: string): Promise<any> {
+    const params = new URLSearchParams({ query });
+    if (contextLength !== undefined) {
+      params.set('contextLength', contextLength.toString());
+    }
+    
+    return this.request(`/search/simple/?${params.toString()}`, {
       method: "POST",
-      body: { query },
+      body: "",
+      headers: { "Content-Type": "text/plain" },
       vault: vaultName,
     });
   }
