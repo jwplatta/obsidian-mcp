@@ -1,5 +1,7 @@
 import { VaultConfig } from "./schemas.js";
 import { VaultManager } from "./vault-manager.js";
+import { logger, LogLevel } from "./logger.js";
+import https from "https";
 
 export class ObsidianAPIError extends Error {
   constructor(
@@ -27,6 +29,11 @@ export class ObsidianClient {
 
   constructor(vaultManager: VaultManager) {
     this.vaultManager = vaultManager;
+    logger.setLevel(LogLevel.DEBUG);
+
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+    logger.info("ObsidianClient initialized");
   }
 
   /**
@@ -45,16 +52,22 @@ export class ObsidianClient {
 
     let vaultConfig: VaultConfig;
     if (vault) {
+      logger.debug(`Using specified vault: ${vault}`);
       vaultConfig = await this.vaultManager.getVault(vault);
     } else {
       const activeVault = await this.vaultManager.getActiveVault();
       if (!activeVault) {
-        throw new Error("No active vault configured. Please set an active vault or specify a vault name.");
+        const error = "No active vault configured. Please set an active vault or specify a vault name.";
+        logger.error(error);
+        throw new Error(error);
       }
+      logger.debug(`Using active vault: ${activeVault.name}`);
       vaultConfig = activeVault;
     }
 
-    const baseUrl = vaultConfig.baseUrl.replace(/\/$/, ""); // Remove trailing slash
+    logger.debug(`Vault configuration for ${vaultConfig.name}:`, vaultConfig);
+
+    const baseUrl = vaultConfig.baseUrl.replace(/\/$/, "");
     const url = `${baseUrl}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
     const requestHeaders: Record<string, string> = {
       "Authorization": `Bearer ${vaultConfig.apiKey}`,
@@ -66,9 +79,23 @@ export class ObsidianClient {
       headers: requestHeaders,
     };
 
-    if (body && (method === "POST" || method === "PUT" || method === "PATCH")) {
+    logger.debug(`Request options:`, {
+      method,
+      url,
+      hasAuth: requestHeaders.Authorization ? 'yes' : 'no',
+      contentType: requestHeaders['Content-Type']
+    });
+
+    if (body !== undefined && (method === "POST" || method === "PUT" || method === "PATCH")) {
       requestOptions.body = typeof body === "string" ? body : JSON.stringify(body);
     }
+
+    logger.debug(`Making ${method} request to ${url}`, {
+      vault: vaultConfig.name,
+      endpoint,
+      hasBody: body !== undefined,
+      bodyLength: typeof body === 'string' ? body.length : JSON.stringify(body || {}).length
+    });
 
     try {
       const response = await fetch(url, requestOptions);
@@ -82,12 +109,26 @@ export class ObsidianClient {
       }
 
       if (!response.ok) {
-        throw new ObsidianAPIError(
+        const error = new ObsidianAPIError(
           `HTTP ${response.status}: ${response.statusText}`,
           response.status,
           responseData
         );
+        logger.error(`API request failed: ${method} ${url}`, {
+          status: response.status,
+          statusText: response.statusText,
+          vault: vaultConfig.name,
+          responseData
+        });
+        throw error;
       }
+
+      logger.debug(`API request successful: ${method} ${url}`, {
+        status: response.status,
+        vault: vaultConfig.name,
+        responseType: contentType,
+        responseLength: typeof responseData === 'string' ? responseData.length : JSON.stringify(responseData).length
+      });
 
       return responseData;
     } catch (error) {
@@ -96,7 +137,18 @@ export class ObsidianClient {
       }
 
       const vaultName = vault || (await this.vaultManager.getActiveVault())?.name || "unknown";
-      throw new VaultConnectionError(vaultName, error as Error);
+      const connectionError = new VaultConnectionError(vaultName, error as Error);
+      logger.error(`Connection error for vault ${vaultName}`, {
+        endpoint,
+        method,
+        url,
+        originalError: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        errorCode: (error as any)?.code,
+        errorCause: (error as any)?.cause,
+        vault: vaultName
+      });
+      throw connectionError;
     }
   }
 
@@ -105,9 +157,14 @@ export class ObsidianClient {
    */
   async testConnection(vaultName?: string): Promise<boolean> {
     try {
+      logger.info(`Testing connection to vault: ${vaultName || 'active vault'}`);
       await this.request("/", { vault: vaultName });
+      logger.info(`Connection successful to vault: ${vaultName || 'active vault'}`);
       return true;
     } catch (error) {
+      logger.warn(`Connection failed to vault: ${vaultName || 'active vault'}`, {
+        error: error instanceof Error ? error.message : String(error)
+      });
       return false;
     }
   }
@@ -123,6 +180,7 @@ export class ObsidianClient {
    * Get active file content
    */
   async getActiveFile(vaultName?: string): Promise<string> {
+    logger.info(`Getting active file content`, { vault: vaultName });
     return this.request("/active/", { vault: vaultName });
   }
 
@@ -130,6 +188,7 @@ export class ObsidianClient {
    * Append content to active file
    */
   async appendToActiveFile(content: string, vaultName?: string): Promise<void> {
+    logger.info(`Appending content to active file`, { vault: vaultName, contentLength: content.length });
     await this.request("/active/", {
       method: "POST",
       body: content,
@@ -142,6 +201,7 @@ export class ObsidianClient {
    * Replace active file content
    */
   async replaceActiveFile(content: string, vaultName?: string): Promise<void> {
+    logger.info(`Replacing active file content`, { vault: vaultName, contentLength: content.length });
     await this.request("/active/", {
       method: "PUT",
       body: content,
@@ -154,6 +214,7 @@ export class ObsidianClient {
    * Delete active file
    */
   async deleteActiveFile(vaultName?: string): Promise<void> {
+    logger.warn(`Deleting active file`, { vault: vaultName });
     await this.request("/active/", {
       method: "DELETE",
       vault: vaultName,
