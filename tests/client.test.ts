@@ -327,10 +327,13 @@ describe("ObsidianClient", () => {
       await client.simpleSearch("test query");
       
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/search/simple/",
+        "http://localhost:27123/search/simple/?query=test+query",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ query: "test query" }),
+          body: "",
+          headers: expect.objectContaining({
+            "Content-Type": "text/plain",
+          }),
         })
       );
     });
