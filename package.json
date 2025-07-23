@@ -7,7 +7,7 @@
     "obsidian-mcp": "./build/index.js"
   },
   "scripts": {
-    "build": "tsc && chmod 755 build/index.js",
+    "build": "tsc && mkdir -p build/resources && cp src/resources/*.md build/resources/ && chmod 755 build/index.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
