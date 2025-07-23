@@ -1,12 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-
-const NWS_API_BASE = "https://api.weather.gov";
-const USER_AGENT = "weather-app/1.0";
+import { VaultManager } from "./vault-manager.js";
+import { ObsidianClient } from "./client.js";
+import { registerVaultManagementTools } from "./tools/vault-management.js";
 
 const server = new McpServer({
-  name: "obsidian",
+  name: "obsidian-mcp",
   version: "1.0.0",
   capabilities: {
     resources: {},
@@ -14,119 +13,37 @@ const server = new McpServer({
   },
 });
 
-////////////////////////////////
-// NOTE: Weather API Examples //
-////////////////////////////////
-async function makeNWSRequest<T>(url: string): Promise<T | null> {
-  const headers = {
-    "User-Agent": USER_AGENT,
-    Accept: "application/geo+json",
-  };
-
-  try {
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return (await response.json()) as T;
-  } catch (error) {
-    console.error("Error making NWS request:", error);
-    return null;
-  }
-}
-
-interface AlertFeature {
-  properties: {
-    event?: string;
-    areaDesc?: string;
-    severity?: string;
-    status?: string;
-    headline?: string;
-  };
-}
-
-function formatAlert(feature: AlertFeature): string {
-  const props = feature.properties;
-  return [
-    `Event: ${props.event || "Unknown"}`,
-    `Area: ${props.areaDesc || "Unknown"}`,
-    `Severity: ${props.severity || "Unknown"}`,
-    `Status: ${props.status || "Unknown"}`,
-    `Headline: ${props.headline || "No headline"}`,
-    "---",
-  ].join("\n");
-}
-
-interface ForecastPeriod {
-  name?: string;
-  temperature?: number;
-  temperatureUnit?: string;
-  windSpeed?: string;
-  windDirection?: string;
-  shortForecast?: string;
-}
-
-interface AlertsResponse {
-  features: AlertFeature[];
-}
-
-server.tool(
-  "get_alerts",
-  "Get weather alerts for a state",
-  {
-    state: z.string().length(2).describe("Two-letter state code (e.g. CA, NY)"),
-  },
-  async ({ state }) => {
-    const stateCode = state.toUpperCase();
-    const alertsUrl = `${NWS_API_BASE}/alerts?area=${stateCode}`;
-    const alertsData = await makeNWSRequest<AlertsResponse>(alertsUrl);
-
-    if (!alertsData) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Failed to retrieve alerts data",
-          },
-        ],
-      };
-    }
-
-    const features = alertsData.features || [];
-    if (features.length === 0) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `No active alerts for ${stateCode}`,
-          },
-        ],
-      };
-    }
-
-    const formattedAlerts = features.map(formatAlert);
-    const alertsText = `Active alerts for ${stateCode}:\n\n${formattedAlerts.join(
-      "\n"
-    )}`;
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: alertsText,
-        },
-      ],
-    };
-  }
-);
-////////////////////////////////
-// END: Weather API Examples //
-////////////////////////////////
+// Initialize vault management system
+const vaultManager = new VaultManager();
+const obsidianClient = new ObsidianClient(vaultManager);
 
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("Obsidian MCP Server running on stdio");
+  try {
+    // Initialize vault manager and register tools
+    await vaultManager.initialize();
+    registerVaultManagementTools(server, vaultManager, obsidianClient);
+    
+    // Start the server
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    console.error("Obsidian MCP Server running on stdio");
+    console.error(`Vault configuration: ${vaultManager.configPath}`);
+    
+    // Log available vaults
+    const vaults = await vaultManager.listVaults();
+    if (vaults.length > 0) {
+      console.error(`Configured vaults: ${vaults.map(v => v.name).join(", ")}`);
+      const activeVault = await vaultManager.getActiveVault();
+      if (activeVault) {
+        console.error(`Active vault: ${activeVault.name}`);
+      }
+    } else {
+      console.error("No vaults configured. Use add_vault tool to add vault configurations.");
+    }
+  } catch (error) {
+    console.error("Error during server initialization:", error);
+    throw error;
+  }
 }
 
 main().catch((error) => {
