@@ -1,10 +1,13 @@
 module.exports = {
   // Use ts-jest preset for TypeScript support
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm',
 
   // Node environment for server-side testing
   testEnvironment: 'node',
 
+  // ES modules support
+  extensionsToTreatAsEsm: ['.ts'],
+  
   // Where to find your source and test files
   roots: ['<rootDir>/src', '<rootDir>/tests'],
 
@@ -16,7 +19,14 @@ module.exports = {
 
   // Transform TypeScript files
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': ['ts-jest', {
+      useESM: true,
+    }],
+  },
+
+  // Module name mapping for .js imports
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
 
   // Coverage collection
@@ -28,9 +38,6 @@ module.exports = {
 
   // Setup file (optional)
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-
-  // Module resolution
-  moduleResolution: 'node',
 
   // Clear mocks between tests
   clearMocks: true,
