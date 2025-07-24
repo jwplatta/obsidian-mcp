@@ -103,7 +103,8 @@ export class ObsidianClient {
       const contentType = response.headers.get("content-type");
 
       if (contentType?.includes("application/json")) {
-        responseData = await response.json();
+        const text = await response.text();
+        responseData = text.trim() ? JSON.parse(text) : null;
       } else {
         responseData = await response.text();
       }
