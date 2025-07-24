@@ -17,7 +17,7 @@
   ],
   "keywords": [],
   "author": "Joseph Platta",
-  "license": "ISC",
+  "license": "MIT",
   "description": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.16.0",
