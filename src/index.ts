@@ -27,7 +27,7 @@ async function main() {
     await vaultManager.initialize();
 
     registerResources(server);
-    registerTools(server, obsidianClient);
+    registerTools(server, vaultManager, obsidianClient);
 
     const transport = new StdioServerTransport();
     await server.connect(transport);
