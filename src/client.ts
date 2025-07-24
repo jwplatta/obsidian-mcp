@@ -347,4 +347,81 @@ export class ObsidianClient {
       vault: vaultName,
     });
   }
+
+  /**
+   * Get periodic note content
+   */
+  async getPeriodicNote(period: string, date?: string, vaultName?: string): Promise<string> {
+    const endpoint = date 
+      ? `/periodic-notes/${encodeURIComponent(period)}/${encodeURIComponent(date)}/`
+      : `/periodic-notes/${encodeURIComponent(period)}/`;
+    
+    logger.info(`Getting periodic note`, { period, date, vault: vaultName });
+    return this.request(endpoint, { vault: vaultName });
+  }
+
+  /**
+   * Append content to periodic note
+   */
+  async appendToPeriodicNote(period: string, content: string, date?: string, vaultName?: string): Promise<void> {
+    const endpoint = date
+      ? `/periodic-notes/${encodeURIComponent(period)}/${encodeURIComponent(date)}/`
+      : `/periodic-notes/${encodeURIComponent(period)}/`;
+    
+    logger.info(`Appending content to periodic note`, { period, date, vault: vaultName, contentLength: content.length });
+    await this.request(endpoint, {
+      method: "POST",
+      body: content,
+      headers: { "Content-Type": "text/plain" },
+      vault: vaultName,
+    });
+  }
+
+  /**
+   * Replace periodic note content
+   */
+  async replacePeriodicNote(period: string, content: string, date?: string, vaultName?: string): Promise<void> {
+    const endpoint = date
+      ? `/periodic-notes/${encodeURIComponent(period)}/${encodeURIComponent(date)}/`
+      : `/periodic-notes/${encodeURIComponent(period)}/`;
+    
+    logger.info(`Replacing periodic note content`, { period, date, vault: vaultName, contentLength: content.length });
+    await this.request(endpoint, {
+      method: "PUT",
+      body: content,
+      headers: { "Content-Type": "text/plain" },
+      vault: vaultName,
+    });
+  }
+
+  /**
+   * Patch periodic note with specific line operations
+   */
+  async patchPeriodicNote(period: string, patchData: any, date?: string, vaultName?: string): Promise<void> {
+    const endpoint = date
+      ? `/periodic-notes/${encodeURIComponent(period)}/${encodeURIComponent(date)}/`
+      : `/periodic-notes/${encodeURIComponent(period)}/`;
+    
+    logger.info(`Patching periodic note`, { period, date, vault: vaultName });
+    await this.request(endpoint, {
+      method: "PATCH",
+      body: patchData,
+      vault: vaultName,
+    });
+  }
+
+  /**
+   * Delete periodic note
+   */
+  async deletePeriodicNote(period: string, date?: string, vaultName?: string): Promise<void> {
+    const endpoint = date
+      ? `/periodic-notes/${encodeURIComponent(period)}/${encodeURIComponent(date)}/`
+      : `/periodic-notes/${encodeURIComponent(period)}/`;
+    
+    logger.warn(`Deleting periodic note`, { period, date, vault: vaultName });
+    await this.request(endpoint, {
+      method: "DELETE",
+      vault: vaultName,
+    });
+  }
 }
