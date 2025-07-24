@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { VaultManager } from "../vault-manager.js";
 import { ObsidianClient } from "../client.js";
 import { z } from "zod";
 
@@ -8,7 +7,6 @@ import { z } from "zod";
  */
 export function registerVaultFileTools(
   server: McpServer,
-  vaultManager: VaultManager,
   obsidianClient: ObsidianClient
 ) {
   server.tool(
