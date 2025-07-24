@@ -9,6 +9,7 @@ import { registerSearchTools } from "./tools/search.js";
 import { registerPeriodicNotesTools } from "./tools/periodic-notes.js";
 import { registerCommandTools } from "./tools/commands.js";
 import { registerNavigationTools } from "./tools/navigation.js";
+import { registerSystemTools } from "./tools/system.js";
 
 export function registerTools(server: McpServer, vaultManager: VaultManager, obsidianClient: ObsidianClient) {
   registerVaultManagementTools(server, vaultManager, obsidianClient);
@@ -19,4 +20,5 @@ export function registerTools(server: McpServer, vaultManager: VaultManager, obs
   registerPeriodicNotesTools(server, obsidianClient);
   registerCommandTools(server, obsidianClient);
   registerNavigationTools(server, obsidianClient);
+  registerSystemTools(server, obsidianClient);
 }
