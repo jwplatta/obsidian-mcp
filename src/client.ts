@@ -324,8 +324,9 @@ export class ObsidianClient {
   /**
    * Open file in Obsidian
    */
-  async openFile(filePath: string, vaultName?: string): Promise<void> {
-    await this.request(`/open/${encodeURIComponent(filePath)}`, {
+  async openFile(filePath: string, newLeaf?: boolean, vaultName?: string): Promise<void> {
+    const queryParams = newLeaf !== undefined ? `?newLeaf=${newLeaf}` : '';
+    await this.request(`/open/${encodeURIComponent(filePath)}${queryParams}`, {
       method: "POST",
       vault: vaultName,
     });
