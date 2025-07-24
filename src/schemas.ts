@@ -185,3 +185,25 @@ export const SimpleSearchParamsSchema = z.object({
 
 export type SearchVaultParams = z.infer<typeof SearchVaultParamsSchema>;
 export type SimpleSearchParams = z.infer<typeof SimpleSearchParamsSchema>;
+
+// Periodic Notes Operations Schemas
+export const PeriodicNoteArgsSchema = z.object({
+  period: z.enum(["daily", "weekly", "monthly", "quarterly", "yearly"]).describe("The period type for the note"),
+  date: z.string().optional().describe("Specific date for the note (ISO 8601 format YYYY-MM-DD). If not provided, uses current date"),
+  vault: z.string().optional().describe("Name of the vault to use. If not provided, uses the active vault"),
+});
+
+export const PeriodicNoteContentArgsSchema = PeriodicNoteArgsSchema.extend({
+  content: z.string().describe("Content to add or replace in the periodic note"),
+});
+
+export const PeriodicNotePatchArgsSchema = PeriodicNoteArgsSchema.extend({
+  operation: z.enum(["insert", "replace", "delete"]).describe("Type of patch operation"),
+  startLine: z.number().optional().describe("Starting line number for the operation (0-based)"),
+  endLine: z.number().optional().describe("Ending line number for replace/delete operations (0-based, exclusive)"),
+  content: z.string().optional().describe("Content to insert or replace with"),
+});
+
+export type PeriodicNoteArgs = z.infer<typeof PeriodicNoteArgsSchema>;
+export type PeriodicNoteContentArgs = z.infer<typeof PeriodicNoteContentArgsSchema>;
+export type PeriodicNotePatchArgs = z.infer<typeof PeriodicNotePatchArgsSchema>;
