@@ -7,6 +7,7 @@ import { registerVaultFileTools } from "./tools/vault-files.js";
 import { registerVaultDirectoryTools } from "./tools/vault-directories.js";
 import { registerSearchTools } from "./tools/search.js";
 import { registerPeriodicNotesTools } from "./tools/periodic-notes.js";
+import { registerCommandTools } from "./tools/commands.js";
 
 export function registerTools(server: McpServer, vaultManager: VaultManager, obsidianClient: ObsidianClient) {
   registerVaultManagementTools(server, vaultManager, obsidianClient);
@@ -15,4 +16,5 @@ export function registerTools(server: McpServer, vaultManager: VaultManager, obs
   registerVaultDirectoryTools(server, obsidianClient);
   registerSearchTools(server, obsidianClient);
   registerPeriodicNotesTools(server, obsidianClient);
+  registerCommandTools(server, obsidianClient);
 }
