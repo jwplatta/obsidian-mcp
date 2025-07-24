@@ -103,8 +103,17 @@ export class ObsidianClient {
       const contentType = response.headers.get("content-type");
 
       if (contentType?.includes("application/json")) {
-        const text = await response.text();
-        responseData = text.trim() ? JSON.parse(text) : null;
+        try {
+          responseData = await response.json();
+        } catch (error) {
+          // Handle empty JSON responses by falling back to text and parsing manually
+          if (error instanceof SyntaxError && error.message.includes("Unexpected end of JSON input")) {
+            const text = await response.text();
+            responseData = text.trim() ? JSON.parse(text) : null;
+          } else {
+            throw error;
+          }
+        }
       } else {
         responseData = await response.text();
       }

@@ -56,6 +56,7 @@ describe("ObsidianClient", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(mockResponse),
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
         headers: {
           get: jest.fn().mockReturnValue("application/json"),
         },
@@ -82,6 +83,7 @@ describe("ObsidianClient", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({}),
+        text: () => Promise.resolve(JSON.stringify({})),
         headers: new Map([["content-type", "application/json"]]),
       });
 
@@ -167,6 +169,7 @@ describe("ObsidianClient", () => {
         status: 404,
         statusText: "Not Found",
         json: () => Promise.resolve({ error: "File not found" }),
+        text: () => Promise.resolve(JSON.stringify({ error: "File not found" })),
         headers: {
           get: jest.fn().mockReturnValue("application/json"),
         },

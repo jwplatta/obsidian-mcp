@@ -139,18 +139,23 @@ export function mockFetchResponse(options: {
     status = 200,
     statusText = "OK",
     headers = {},
-    text = "",
+    text,
     json,
   } = options;
 
   const responseHeaders = new Headers(headers);
+
+  // If JSON is provided but no explicit text, use JSON.stringify of the JSON data
+  // If explicit text is provided, use that
+  // Otherwise, use empty string
+  const responseText = text !== undefined ? text : (json !== undefined ? JSON.stringify(json) : "");
 
   return {
     ok,
     status,
     statusText,
     headers: responseHeaders,
-    text: () => Promise.resolve(text),
+    text: () => Promise.resolve(responseText),
     json: () => Promise.resolve(json || {}),
   } as Response;
 }

@@ -62,6 +62,7 @@ describe("System Tools - ObsidianClient methods", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(mockServerInfo),
+        text: () => Promise.resolve(JSON.stringify(mockServerInfo)),
         headers: {
           get: jest.fn().mockReturnValue("application/json"),
         },
@@ -95,6 +96,7 @@ describe("System Tools - ObsidianClient methods", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(mockServerInfo),
+        text: () => Promise.resolve(JSON.stringify(mockServerInfo)),
         headers: {
           get: jest.fn().mockReturnValue("application/json"),
         },
@@ -189,6 +191,7 @@ describe("System Tools - ObsidianClient methods", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ status: "ok" }),
+        text: () => Promise.resolve(JSON.stringify({ status: "ok" })),
         headers: {
           get: jest.fn().mockReturnValue("application/json"),
         },
