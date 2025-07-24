@@ -30,7 +30,7 @@ describe("Periodic Notes Client Operations", () => {
       const mockContent = "# Daily Note\n\n## Tasks\n- Review emails";
       mockFetch.mockResolvedValueOnce(
         mockFetchResponse({
-          headers: { "content-type": "text/plain" },
+          headers: { "content-type": "text/markdown" },
           text: mockContent,
         })
       );
@@ -38,7 +38,7 @@ describe("Periodic Notes Client Operations", () => {
       const result = await obsidianClient.getPeriodicNote("daily");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/daily/",
+        "http://localhost:27123/periodic/daily/",
         {
           method: "GET",
           headers: {
@@ -55,7 +55,7 @@ describe("Periodic Notes Client Operations", () => {
       const mockContent = "# Weekly Note\n\n## Goals for this week";
       mockFetch.mockResolvedValueOnce(
         mockFetchResponse({
-          headers: { "content-type": "text/plain" },
+          headers: { "content-type": "text/markdown" },
           text: mockContent,
         })
       );
@@ -63,7 +63,7 @@ describe("Periodic Notes Client Operations", () => {
       const result = await obsidianClient.getPeriodicNote("weekly", "2024-01-15");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/weekly/2024-01-15/",
+        "http://localhost:27123/periodic/weekly/2024/01/15/",
         expect.objectContaining({
           method: "GET",
         })
@@ -77,7 +77,7 @@ describe("Periodic Notes Client Operations", () => {
 
       mockFetch.mockResolvedValueOnce(
         mockFetchResponse({
-          headers: { "content-type": "text/plain" },
+          headers: { "content-type": "text/markdown" },
           text: "# Vault 2 Daily Note",
         })
       );
@@ -85,7 +85,7 @@ describe("Periodic Notes Client Operations", () => {
       await obsidianClient.getPeriodicNote("daily", undefined, "vault2");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27124/periodic-notes/daily/",
+        "http://localhost:27124/periodic/daily/",
         expect.objectContaining({
           headers: expect.objectContaining({
             "Authorization": "Bearer vault2-key",
@@ -116,12 +116,12 @@ describe("Periodic Notes Client Operations", () => {
       await obsidianClient.appendToPeriodicNote("monthly", "\n\n## New Section\n- Additional content");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/monthly/",
+        "http://localhost:27123/periodic/monthly/",
         {
           method: "POST",
           headers: {
             "Authorization": "Bearer test-api-key",
-            "Content-Type": "text/plain",
+            "Content-Type": "text/markdown",
           },
           body: "\n\n## New Section\n- Additional content",
         }
@@ -134,7 +134,7 @@ describe("Periodic Notes Client Operations", () => {
       await obsidianClient.appendToPeriodicNote("quarterly", "\n## Q1 Goals", "2024-01-01");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/quarterly/2024-01-01/",
+        "http://localhost:27123/periodic/quarterly/2024/01/01/",
         expect.objectContaining({
           method: "POST",
           body: "\n## Q1 Goals",
@@ -166,12 +166,12 @@ describe("Periodic Notes Client Operations", () => {
       await obsidianClient.replacePeriodicNote("yearly", newContent, "2024-01-01");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/yearly/2024-01-01/",
+        "http://localhost:27123/periodic/yearly/2024/01/01/",
         {
           method: "PUT",
           headers: {
             "Authorization": "Bearer test-api-key",
-            "Content-Type": "text/plain",
+            "Content-Type": "text/markdown",
           },
           body: newContent,
         }
@@ -184,7 +184,7 @@ describe("Periodic Notes Client Operations", () => {
       await obsidianClient.replacePeriodicNote("daily", "");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/daily/",
+        "http://localhost:27123/periodic/daily/",
         expect.objectContaining({
           method: "PUT",
           body: "",
@@ -194,69 +194,84 @@ describe("Periodic Notes Client Operations", () => {
   });
 
   describe("patchPeriodicNote", () => {
-    test("should patch with insert operation", async () => {
+    test("should patch with append to heading", async () => {
       mockFetch.mockResolvedValueOnce(mockFetchResponse({}));
 
       const patchData = {
-        operation: "insert",
-        startLine: 5,
-        endLine: undefined,
+        operation: "append" as const,
+        targetType: "heading" as const,
+        target: "Meeting Notes",
         content: "## New Meeting Notes\n- Discussed project timeline",
       };
 
       await obsidianClient.patchPeriodicNote("weekly", patchData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/weekly/",
+        "http://localhost:27123/periodic/weekly/",
         {
           method: "PATCH",
           headers: {
             "Authorization": "Bearer test-api-key",
-            "Content-Type": "application/json",
+            "Operation": "append",
+            "Target-Type": "heading",
+            "Target": "Meeting Notes",
+            "Content-Type": "text/markdown",
           },
-          body: JSON.stringify(patchData),
+          body: "## New Meeting Notes\n- Discussed project timeline",
         }
       );
     });
 
-    test("should patch with replace operation", async () => {
+    test("should patch with replace block reference", async () => {
       mockFetch.mockResolvedValueOnce(mockFetchResponse({}));
 
       const patchData = {
-        operation: "replace",
-        startLine: 2,
-        endLine: 4,
+        operation: "replace" as const,
+        targetType: "block" as const,
+        target: "2d9b4a",
         content: "## Updated Tasks\n- New priority items",
       };
 
       await obsidianClient.patchPeriodicNote("daily", patchData, "2024-01-15");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/daily/2024-01-15/",
+        "http://localhost:27123/periodic/daily/2024/01/15/",
         expect.objectContaining({
           method: "PATCH",
-          body: JSON.stringify(patchData),
+          headers: expect.objectContaining({
+            "Operation": "replace",
+            "Target-Type": "block",
+            "Target": "2d9b4a",
+          }),
+          body: "## Updated Tasks\n- New priority items",
         })
       );
     });
 
-    test("should patch with delete operation", async () => {
+    test("should patch frontmatter with create target", async () => {
       mockFetch.mockResolvedValueOnce(mockFetchResponse({}));
 
       const patchData = {
-        operation: "delete",
-        startLine: 10,
-        endLine: 12,
-        content: undefined,
+        operation: "replace" as const,
+        targetType: "frontmatter" as const,
+        target: "status",
+        content: "completed",
+        createTargetIfMissing: true,
       };
 
       await obsidianClient.patchPeriodicNote("monthly", patchData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/monthly/",
+        "http://localhost:27123/periodic/monthly/",
         expect.objectContaining({
           method: "PATCH",
-          body: JSON.stringify(patchData),
+          headers: expect.objectContaining({
+            "Operation": "replace",
+            "Target-Type": "frontmatter",
+            "Target": "status",
+            "Create-Target-If-Missing": "true",
+          }),
+          body: "completed",
         })
       );
     });
@@ -273,9 +288,9 @@ describe("Periodic Notes Client Operations", () => {
       );
 
       const patchData = {
-        operation: "insert",
-        startLine: 0,
-        endLine: undefined,
+        operation: "append" as const,
+        targetType: "heading" as const,
+        target: "Nonexistent Heading",
         content: "New content",
       };
 
@@ -292,7 +307,7 @@ describe("Periodic Notes Client Operations", () => {
       await obsidianClient.deletePeriodicNote("daily", "2024-01-15");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/daily/2024-01-15/",
+        "http://localhost:27123/periodic/daily/2024/01/15/",
         {
           method: "DELETE",
           headers: {
@@ -309,7 +324,7 @@ describe("Periodic Notes Client Operations", () => {
       await obsidianClient.deletePeriodicNote("weekly");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:27123/periodic-notes/weekly/",
+        "http://localhost:27123/periodic/weekly/",
         expect.objectContaining({
           method: "DELETE",
         })
@@ -353,7 +368,7 @@ describe("Periodic Notes Client Operations", () => {
       for (const period of periods) {
         mockFetch.mockResolvedValueOnce(
           mockFetchResponse({
-            headers: { "content-type": "text/plain" },
+            headers: { "content-type": "text/markdown" },
             text: `# ${period} note`,
           })
         );

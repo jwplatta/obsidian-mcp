@@ -112,22 +112,24 @@ export function registerPeriodicNotesTools(
 
   server.tool(
     "patch_periodic_note",
-    "Modify specific sections of a daily, weekly, monthly, quarterly, or yearly note using line-based operations",
+    "Modify specific sections of a daily, weekly, monthly, quarterly, or yearly note using heading, block reference, or frontmatter operations",
     {
       period: z.enum(["daily", "weekly", "monthly", "quarterly", "yearly"]).describe("The period type for the note"),
-      operation: z.enum(["insert", "replace", "delete"]).describe("Type of patch operation to perform"),
-      startLine: z.number().optional().describe("Starting line number for the operation (0-based)"),
-      endLine: z.number().optional().describe("Ending line number for replace/delete operations (0-based, exclusive)"),
-      content: z.string().optional().describe("Content to insert or replace with (required for insert/replace operations)"),
+      operation: z.enum(["append", "prepend", "replace"]).describe("Type of patch operation to perform"),
+      targetType: z.enum(["heading", "block", "frontmatter"]).describe("Type of target (heading, block reference, or frontmatter field)"),
+      target: z.string().describe("Target identifier (heading name, block reference ID, or frontmatter field name)"),
+      content: z.string().describe("Content to append, prepend, or replace with"),
+      createTargetIfMissing: z.boolean().optional().describe("Create the target if it doesn't exist (useful for frontmatter fields)"),
       date: z.string().optional().describe("Specific date for the note (ISO 8601 format YYYY-MM-DD). If not provided, uses current date"),
       vault: z.string().optional().describe("Name of the vault to use. If not provided, uses the active vault"),
     },
-    async ({ period, operation, startLine, endLine, content, date, vault }) => {
+    async ({ period, operation, targetType, target, content, createTargetIfMissing, date, vault }) => {
       const patchData = {
         operation,
-        startLine,
-        endLine,
+        targetType,
+        target,
         content,
+        createTargetIfMissing,
       };
       
       try {
@@ -136,7 +138,7 @@ export function registerPeriodicNotesTools(
           content: [
             {
               type: "text",
-              text: `Successfully patched ${period} note${date ? ` for ${date}` : ''} with ${operation} operation`,
+              text: `Successfully patched ${period} note${date ? ` for ${date}` : ''} with ${operation} operation on ${targetType} "${target}"`,
             },
           ],
         };
