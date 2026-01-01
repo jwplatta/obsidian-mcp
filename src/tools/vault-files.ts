@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ObsidianClient } from "../client.js";
 import { z } from "zod";
 
+
 /**
  * Register vault file management tools
  */
@@ -40,6 +41,49 @@ export function registerVaultFileTools(
       }
     }
   );
+
+  server.tool(
+    "get_files",
+    "Retrieve content from multiple files from the vault by path",
+    {
+      paths: z.array(z.string().min(1)).min(1).describe("Array of file paths relative to vault root"),
+      vault: z.string().optional().describe("Optional vault name to use (defaults to active vault)"),
+    },
+    async ({ paths, vault }) => {
+      try {
+        const results = await Promise.allSettled(
+          paths.map(path => obsidianClient.getFile(path, vault))
+        );
+
+        const fileContents = results.map((result, index) => {
+          if (result.status === 'fulfilled') {
+            return `File: ${paths[index]}\n---\n${result.value}\n`;
+          } else {
+            return `File: ${paths[index]}\n---\nError: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}\n`;
+          }
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: fileContents.join('\n'),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error getting files: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  )
 
   server.tool(
     "create_file",
